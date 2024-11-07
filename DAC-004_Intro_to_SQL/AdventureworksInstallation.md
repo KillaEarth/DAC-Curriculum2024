@@ -52,9 +52,11 @@ It should look something like this! A mixture of both files in the folder.
 
 <img align='centre' src="https://i.imgur.com/ibD5PiT.png" width="500">
 
+
 ### 3) Go to the directory where the repository is stored! In shell/terminal
 
 ```bash
+
 cd /home/your_username/AdventureWorks-for-Postgres
 ```
 

@@ -4,7 +4,14 @@
 
 -- Select department table, the employee table and vendor table. Let's explore the database a little!
 
+SELECT *
+FROM humanresources.department
 
+SELECT *
+FROM humanresources.employee
+
+SELECT *
+FROM humanresources.vendors
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -12,13 +19,23 @@
 
 -- Select only name, start time and end time.
 
-
+SELECT
+	name,
+	starttime,
+	endtime.
+FROM humanresources.shifts;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- SELECT DISTINCT values: Unique column value
 
 -- Distinct group names from department and businessentityid from jobcandidate
+
+SELECT DISTINCT groupname
+FROM humanresources.department;
+
+SELECT DISTINCT businessentityid
+FROM humanresources.jobcandidate;
 
 
 
@@ -34,6 +51,13 @@
 
 -- Limit the table productvendor to 10 rows and purchaseorderdetail to 100 rows
 
+SELECT *
+FROM purchasing.productvendor
+LIMIT 10;
+
+SELECT *
+FROM purchasing.purchaseorderdetail
+LIMIT 100;
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -42,33 +66,58 @@
 
 -- From the customer table Multiplcation/division/addition/subtraction the store_id
 
-
+SELECT *
+	customerid
+	storeid * 10 AS tenfold
+FROM sales.customer
+LIMIT 15;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --Q1: SELECT the DISTINCT title, last name, middlename and first_name of each person from the person schema. Return only 231 rows.
 --A1;
 
-
+SELECT DISTINCT
+	title
+	lastname,
+	middlename,
+	firstname,
+FROM person.person
+LIMIT 231;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- WHERE clause: = 
 -- gender is male
 
+SELECT *
+	jobtitle,
+	maritalstatus,
+	gender
+	
+FROM humanresources.employee
+WHERE gender = 'M';
 
 -- Only Research and Development
 
-
+SELECT *
+FROM humanresources.employee;
+WHERE groupname = 'Research and Development';
 -- When dealing with NULL values
 
+SELECT *
+FROM purchasing.product 
+WHERE onordertqty = 'Nll';
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- WHERE clause: Arithmetic filter
 
 -- From customer table, territoryid = 4
-
+SELECT *
+FROM sales.customer
+WHERE terriotory = 4
+LINES 100;
 
 -- From person table, emailpromotion <> 0
 
@@ -84,7 +133,10 @@
 --WHERE clause: OR clause
 
 -- From employee table, select either Design Engineer or Tool Designer
-
+SELECT *
+FROM humanresource.employee
+WHERE jobtitle = 'Design Engineer'
+	OR jobtitle = 'Tool Designer'
 
 -- From product, select either Black or Silver
 
@@ -95,6 +147,10 @@
 
 -- From Vendor, preferredvendorstatus and activeflag must be TRUE
 
+SELECT *
+From purchasing.vendor
+WHERE preferredvendorstatus = TRUE
+	AND activeflag = TRUE 
 
 -- From employee, gender must be Male and maritalstatus must be single
 
@@ -105,13 +161,32 @@
 
 -- From the employee table pick either, marital status as single and gender male or marital status as married and gender female.
 
+SELECT
+	jobtitle,
+	gender,
+	maritalstatus,
+	vacationhours,
+	sickleavehours
+
+FROM humanresources.employee
+WHERE (marital status = 'S' AND gender = 'M')
+	OR (marital status = 'M' AND gender = 'F');
 
 -- Example of poor formatting and logic.
 -- From the salesperson table select territory_id either 4 or 6 and salesquota either 250000 or 300000
 
+SELECT *
+FROM sales.salesperson
+WHERE territoryid = 4 OR territoryid = 6
+	AND salesquota = 250000 OR salesquota = 300000;
+
 --
 
 
+SELECT *
+FROM sales.salesperson
+WHERE (territoryid = 4 OR territoryid = 6)
+	AND (salesquota = 250000 OR salesquota = 300000);
 --
 
 
@@ -131,6 +206,17 @@
 -- '1984-04-30'
 -- '1985-05-04'
 
+SELECT *
+FROM humanresources.employee;
+
+
+SELECT *
+FROM humanresources.employee
+WHERE birthdate IN(
+	'1977-06-06'
+	'1984-04-30'
+	'1985-05-04'
+);
 
 
 -- Find all the middle names that contains either A or B or C.
@@ -315,13 +401,44 @@ FROM humanresources.department;
 SELECT *
 FROM production.product;
 
+
 SELECT *
 FROM sales.salesorderdetail;
 
-
+SELECT
+	product.productid
+	product.name AS productname,
+	COALESCE(SUM(salesorderdetail.orderqty), 0) AS totalsalesquantity
+FROM production.product AS product
+LEFT JOIN sales.salesorderdetail AS salesorderdetail
+	ON product.productid = salesorderdetail.productionid
+GROUP BY
+	product.productid
+	product.name
+ORDER BY
+	COALESCE(SUM(salesorderdetail.orderqty), 0) DESC;
 
 -- Q5: List all employees and their associated email addresses,  
 -- display their full name and email address.
+
+SELECT *
+FROM humanresources.employee;
+
+SELECT *
+FROM person.person;
+
+SELECT *
+FROM person.emailaddress;
+
+
+SELECT
+ 	CONCAT(person.firstname, ' ',person.middlename,' ',person.lastname) AS fullname
+	emailaddress.emailaddress AS email
+FROM humanresources.employee AS employee
+LEFT JOIN person.person AS person
+	ON employee.businessentityid = person.businessentityid
+LEFT JOIN person.emailaddress AS emailaddress
+	ON employee.businessentityid.
 
 
 -- Retrieve a list of all individual customers id, firstname along with the total number of orders they have placed 
@@ -336,10 +453,28 @@ FROM sales.customer;
 SELECT *
 FROM sales.salesorderheader;
 
+SELECT
+    customer.customerid,
+    person.firstname,
+    COUNT(salesorderheader.salesorderid) AS purchase,  -- COUNT the salesorderid
+    ROUND(SUM(salesorderheader.subtotal), 2) AS cost  -- SUM the subtotal and round it
+FROM sales.customer AS customer
+LEFT JOIN person.person AS person
+    ON customer.personid = person.businessentityid
+LEFT JOIN sales.salesorderheader AS salesorderheader
+    ON customer.customerid = salesorderheader.customerid
+GROUP BY
+    customer.customerid,
+    person.firstname
+HAVING ROUND(SUM(salesorderheader.subtotal), 2) > 0  -- Ensure cost is greater than 0
 
-
+/*
 -- Q6: Can LEFT JOIN cause duplication? How?
 -- A6: 
+-- It depends on the relationship that both the tables present for the left join share.
+-- If it is a one-to-one relationship, the chance of having duplicates is unliekly.
+-- Howeverm if it is a one-to-many relationship, there could be a chance for duplicates to be present.
+*/
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -352,7 +487,16 @@ SELECT
     salesorderheader.orderdate AS orderdate, 
     customer.customerid AS customerid, 
     customer.personid AS personid
+FROM sales.salesorderheader AS salesorderheader;
+
+SELECT 
+    salesorderheader.salesorderid AS salesorderid, 
+    salesorderheader.orderdate AS orderdate,
+	customer.customerid AS customerid, 
+    customer.personid AS personid
 FROM sales.salesorderheader AS salesorderheader
+RIGHT JOIN sales.customer AS customer
+	ON salesorderheader.customerid = customer.customerid;
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -366,8 +510,11 @@ SELECT
     employee.businessentityid AS employeeid,
     salesorderheader.salesorderid
 FROM humanresources.employee AS employee
+FULL OUTER JOIN sales.salesorderheader AS salesorderheader
+	ON employee.businessentityid = salesorderheader.salespersonid;
+	
 
-		
+
 -- Write a query to retrieve a list of all employees and customers, and if either side doesn't have a FirstName, 
 -- use the available value from the other side. Use FULL OUTER JOIN and COALESCE.
 
@@ -397,9 +544,19 @@ ORDER BY employee.employeeid;
 
 -- Write a query to generate all possible combinations of product categories and product models. Show the category name and the model name.
 
-SELECT 
-
+SELECT *
 FROM production.productcategory AS productcategory
+LIMIT 10;
+
+SELECT *
+FROM production.productcategory AS productmodel
+
+SELECT 
+	productcategory.name AS categoryname,
+	productmodel.name AS modelname
+FROM production.productcategory AS productcategory
+CROSS JOIN production.productcategory AS productmodel 
+ORDER BY productcategory.name ASC;
 
 
 -- Each category name is matched to each model name
@@ -408,7 +565,17 @@ FROM production.productcategory AS productcategory
 
 -- UNION, stacking the tables on top of each other without having duplicates
 
-
+SELECT 
+	firstname,
+	lastname,
+	CONCAT(firstname, ' ', lastname) AS fullname
+FROM person.person
+UNION
+SELECT 
+	firstname,
+	lastname,
+	CONCAT(firstname, ' ', lastname) AS fullname
+FROM person.person;
 
 -- Union them together segregating employee and customer
 
@@ -418,6 +585,25 @@ FROM person.person;
 SELECT *
 FROM sales.customer;
 
+SELECT 
+	firstname,
+	lastname,
+	CONCAT(firstname, ' ', lastname) AS fullname,
+	'Employee' AS category
+FROM person.person AS person
+INNER JOIN humanresources.employee AS employee
+	ON person.businessentityid = employee.businessentityid;
+
+SELECT
+	firstname,
+	lastname,
+	CONCAT(firstname, ' ', lastname) AS fullname,
+	'customer' AS category
+FROM person.person as person
+inner join sales.customer as customer
+	on person.businessentityid = customer.personid
+where customer.storeid is null
+limit 10;
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -448,21 +634,76 @@ FROM purchasing.purchaseorderheader;
 -- Getting parts of the date out
 
 SELECT 
+	EXTRACT(YEAR FROM orderdate) AS year,
+	EXTRACT(QUARTER FROM orderdate) AS quarter,
+	EXTRACT(MONTH FROM orderdate) AS month,
+	EXTRACT(WEEK FROM orderdate) AS week,
+	EXTRACT(DAY FROM orderdate) AS day,
+	EXTRACT(HOUR FROM orderdate) AS hour,
+	EXTRACT(MINUTE FROM orderdate) AS minute,
+	EXTRACT(SECOND FROM orderdate) AS second,
 
+	CAST(orderdate AS TIME) as time,
+	CAST(orderdate AS DATE) as date
 FROM sales.salesorderheader;
 
 -- DATETIME manipulations
 
 SELECT
-
+	orderdate AT time zone 'UTC' AT time ZONE 'Asia/Singapore' as local_time,
+	CURRENT_DATE AS today,
+	CURRENT_DATE + INTERVAL '10 days' AS add_days,
+	CURRENT_DATE - INTERVAL '10 days' AS minus_days,
+	CURRENT_DATE + INTERVAL '1 month' AS add_month
 FROM sales.salesorderheader
 WHERE territoryid = 1
 	AND EXTRACT(YEAR FROM orderdate) = 2011;
 
 -- Use string functions to format employee names and email addresses
-SELECT
+
+SELECT 
+	CAST(person.businessentityid AS int),
+	CAST(person.businessentityid AS numeric) /2 AS numeric_id,
+	CAST(person.businessentityid AS decimal) /2 AS decimal_id, 
+	CAST(person.businessentityid AS VARCHAR(100)) AS varchar_id,
+	person.lastname as normal_lastname,
+	UPPER(person.lastname) as upperlastname,
+	LOWER(person.lastname) as lowerlastname,
+	LENGTH(person.firstname) as firstnamelength,
+
+	LEFT(emailaddress.emailaddress, 10) as startemail,
+	RIGHT(emailaddress.emailaddress, 10) as startemail,
+	
+	SUBSTRING(emailaddress.emailaddress, 1, 5) as partialemail,
+	SUBSTRING(emailaddress.emailaddress, 3, 5) as partialemail,
+	emailaddress.emailaddress as old_mail,
+	REPLACE(emailaddress.emailaddress, 'adventure-works.com', '@gmail.com') as new_email
+
 
 FROM person.person AS person
+INNER JOIN person.emailaddress AS emailaddress
+	ON person.businessentityid = emailaddress.businessentityid
+
+
+
+
+
+/*
+
+CAST()
+UPPER()
+LOWER()
+LENGTH()
+LEFT()
+RIGHT()
+SUBSTRING()
+REPLACE()
+CONCAT()
+
+
+*/
+
+
 
 
 -- From the following table write a query in  SQL to find the  email addresses of employees and groups them by city. 
@@ -470,9 +711,8 @@ FROM person.person AS person
 
 SELECT 
 	address.city, 
-
 FROM person.businessentityaddress AS businessentityaddress  
-
+INNER JOIN person.address AS add.
 GROUP BY 
 LIMIT 10;
 
@@ -485,9 +725,15 @@ SELECT
 	productid,
 	name,
 	listprice,
+	CASE
+		when listprice = 0 then 'free'
+		when listprice < 50 then 'budget'
+		when listprice between 50 and 1000 then 'mid-range'
+		else 'premium'
+	end as price_category
 
-FROM production.product;
-
+FROM production.product
+order by listprice desc;
 -- Write a query to categorize sales orders based on the total amount (TotalDue). If the total amount is less than 1000, categorize it as "Low", 
 -- if it's between 1000 and 5000, categorize it as "Medium", and if it's greater than 5000, categorize it as "High".
 
